@@ -8,6 +8,10 @@ import os
 from app.database import get_db
 from app import models, schemas
 
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 SECRET_KEY = os.getenv("SECRET_KEY", "changethisinsecret")
@@ -79,3 +83,23 @@ def login(credentials: schemas.UserLogin, db: Session = Depends(get_db)):
 
     token = create_token({"sub": str(user.id), "username": user.username})
     return {"access_token": token, "token_type": "bearer"}
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(models.User).filter(
+        models.User.id == int(user_id)
+    ).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+    return user
