@@ -7,6 +7,7 @@ from fastapi import HTTPException, status
 from jose import jwt, JWTError
 from app.routers.auth import SECRET_KEY, ALGORITHM
 from app.services.market_data import is_valid_ticker, get_stock_data
+from app.services.ai_services import analyse_portfolio
 
 router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 
@@ -101,3 +102,71 @@ def add_stock(
     db.refresh(new_entry)
 
     return {"message": f"Added {item.shares} shares of {item.ticker.upper()} to your portfolio"}
+
+
+
+
+@router.get("/analyse")
+def analyse(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # 1. fetch portfolio same as GET /
+    existing_portfolio = db.query(models.Portfolio).filter(
+        models.Portfolio.user_id == current_user.id
+    ).all()
+
+    if not existing_portfolio:
+        raise HTTPException(status_code=400, detail="Your portfolio is empty")
+
+    # 2. build portfolio_data dict with live prices
+    items = []
+    total_invested = 0.0
+    total_current_value = 0.0
+
+    for item in existing_portfolio:
+        stock_data = get_stock_data(item.ticker)
+        current_price = stock_data["current_price"] or 0.0
+        current_value = round(item.shares * current_price, 2)
+        invested_value = round(item.shares * item.buy_price, 2)
+        gain_loss = round(current_value - invested_value, 2)
+        gain_loss_pct = round(
+            (gain_loss / invested_value) * 100 if invested_value > 0 else 0.0, 2
+        )
+        total_invested += invested_value
+        total_current_value += current_value
+
+        items.append({
+            "ticker": item.ticker,
+            "company_name": item.company_name,
+            "shares": item.shares,
+            "invested_value": invested_value,
+            "current_value": current_value,
+            "gain_loss": gain_loss,
+            "gain_loss_pct": gain_loss_pct,
+            "weight_pct": 0.0  # calculate after loop
+        })
+
+    # 3. calculate weight for each stock
+    for item in items:
+        item["weight_pct"] = round(
+            (item["current_value"] / total_current_value) * 100 if total_current_value > 0 else 0.0, 2
+        )
+
+    total_gain_loss = round(total_current_value - total_invested, 2)
+    total_gain_loss_pct = round(
+        (total_gain_loss / total_invested) * 100 if total_invested > 0 else 0.0, 2
+    )
+
+    portfolio_data = {
+        "username": current_user.username,
+        "total_invested": round(total_invested, 2),
+        "total_current_value": round(total_current_value, 2),
+        "total_gain_loss": total_gain_loss,
+        "total_gain_loss_pct": total_gain_loss_pct,
+        "items": items
+    }
+
+    # 4. call AI service
+    analysis = analyse_portfolio(portfolio_data)
+    return {"analysis": analysis}
