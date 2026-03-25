@@ -1,12 +1,18 @@
-.env
-venv/
-__pycache__/
-*.pyc
-__pycache__/
-*.pyc
+# Environment files
+**/.env
 backend/.env
 frontend/.env
-**/.env
-__pycache__/
-*.pyc
+
+# Python
+backend/venv/
+**/__pycache__/
+**/*.pyc
+
+# Node
+frontend/node_modules/
+
+# VS Code
 .vscode/
+
+# Docker
+docker-compose.yml
