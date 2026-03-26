@@ -14,8 +14,16 @@ router = APIRouter(prefix="/portfolio", tags=["Portfolio"])
 @router.get("/")
 def get_portfolio(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     existing_portfolio = db.query(models.Portfolio).filter(models.Portfolio.user_id == current_user.id).all()
+    # Fixed — always returns same shape
     if not existing_portfolio:
-        return {"message": "Your portfolio is empty", "items": []}
+        return {
+        "items": [],
+        "total_invested": 0.0,
+        "total_current_value": 0.0,
+        "total_gain_loss": 0.0,
+        "total_gain_loss_pct": 0.0
+        }
+    
         # Build response with current stock data    
     portfolio_items = []
     total_invested = 0.0

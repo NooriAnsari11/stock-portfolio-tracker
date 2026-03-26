@@ -66,32 +66,29 @@ return (
         <div className="max-w-6xl mx-auto px-6 py-8">
 
             {/* Summary cards */}
-            {portfolio && (
-                <div className="grid grid-cols-3 gap-4 mb-8">
-
-                    <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-                        <p className="text-gray-400 text-sm mb-1">Total Invested</p>
-                        <p className="text-2xl font-bold text-white">
-                            ${portfolio.total_invested.toFixed(2)}
-                        </p>
-                    </div>
-
-                    <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-                        <p className="text-gray-400 text-sm mb-1">Current Value</p>
-                        <p className="text-2xl font-bold text-white">
-                            ${portfolio.total_current_value.toFixed(2)}
-                        </p>
-                    </div>
-
-                    <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
-                        <p className="text-gray-400 text-sm mb-1">Total Gain / Loss</p>
-                        <p className={`text-2xl font-bold ${portfolio.total_gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                            ${portfolio.total_gain_loss.toFixed(2)} ({portfolio.total_gain_loss_pct.toFixed(2)}%)
-                        </p>
-                    </div>
-
-                </div>
-            )}
+          {/* Summary cards - only show if portfolio has items */}
+{portfolio && portfolio.items && portfolio.items.length > 0 && (
+    <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+            <p className="text-gray-400 text-sm mb-1">Total Invested</p>
+            <p className="text-2xl font-bold text-white">
+                ${portfolio.total_invested.toFixed(2)}
+            </p>
+        </div>
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+            <p className="text-gray-400 text-sm mb-1">Current Value</p>
+            <p className="text-2xl font-bold text-white">
+                ${portfolio.total_current_value.toFixed(2)}
+            </p>
+        </div>
+        <div className="bg-gray-800 rounded-xl p-5 border border-gray-700">
+            <p className="text-gray-400 text-sm mb-1">Total Gain / Loss</p>
+            <p className={`text-2xl font-bold ${portfolio.total_gain_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                ${portfolio.total_gain_loss.toFixed(2)} ({portfolio.total_gain_loss_pct.toFixed(2)}%)
+            </p>
+        </div>
+    </div>
+)}
 
             {/* Add stock form */}
             <div className="mb-8">

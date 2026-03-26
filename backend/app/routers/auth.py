@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-import bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
 from jose import jwt
 from datetime import datetime, timedelta
 import os
@@ -20,18 +20,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
 
 def hash_password(password: str) -> str:
-    # bcrypt works with bytes directly — no passlib needed
-    password_bytes = password.encode("utf-8")
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode("utf-8")  # store as string in DB
-
+    return generate_password_hash(password)
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(
-        plain.encode("utf-8"),
-        hashed.encode("utf-8")
-    )
+    return check_password_hash(hashed, plain)
 
 
 def create_token(data: dict) -> str:
